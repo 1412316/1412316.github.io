@@ -1,0 +1,187 @@
+<html>
+	<head>
+		<title>Video/Canvas Sobel Filter Demo</title>
+		<style>
+			#v{
+				position: absolute;
+    			left: 60;
+    			top: 222;
+			}
+			
+		</style>
+	</head>
+	<body>
+		<canvas id=c width="1200" height="700"></canvas>
+		<video id=v
+			   width="480"
+			   height="270"
+			   controls loop>
+    			<source src="We bare bears.mp4" type=video/mp4>
+		</video>
+		<script>
+			function drawvideo(v,c,w,h) {
+				if(v.paused || v.ended) return false;
+    			c.drawImage(v,660,215,w,h);
+
+    			var vdata = c.getImageData(660,215,w,h);
+    			var data = vdata.data;
+
+    			// xai bien tam luu 8 o xung quanh de xu ly
+    			var pixelX, pixelY;
+    			var temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8;
+    			var kernelX = [
+      				[-1,0,1],
+      				[-2,0,2],
+      				[-1,0,1]
+    			];
+
+			    var kernelY = [
+			    	[-1,-2,-1],
+			    	[0,0,0],
+			    	[1,2,1]
+			    ];
+
+			    // Chuyển thành ảnh xám
+			    for (var i = 0; i < data.length; i+=4) {
+			        var r = data[i];
+			        var g = data[i+1];
+			        var b = data[i+2];
+			        var brightness = 0.2126*r + 0.7152*g + 0.0722*b;
+			        //var brightness = (r + g + b)/3;
+			        data[i] = brightness;
+			        data[i+1] = brightness;
+			        data[i+2] = brightness;
+			    }
+
+			    for (var j = 0; j < data.length; j+=4) {
+			    		temp1 = data[j-w-4];
+	    				temp2 = data[j-w];
+	    				temp3 = data[j-w+4];
+	    				temp4 = data[j-4];
+	    				temp5 = data[j];
+	    				temp6 = data[j+4];
+	    				temp7 = data[j+w-4];
+	    				temp8 = data[j+w];
+	    				temp9 = data[j+w+4];
+
+	    				/*// Pixel cạnh = 0
+	    				// 4 góc
+	    				if (j == 0) {
+	    					temp1 = temp2 = temp3 = temp4 = temp7 = 0;
+	    				}
+
+	    				if (j == w-4) {
+	    					temp1 = temp2 = temp3 = temp6 = temp9 = 0;
+	    				}
+
+	    				if (j == w*h) {
+	    					temp1 = temp4 = temp7 = temp8 = temp9 = 0;
+	    				}
+
+	    				if (j == w*h + w-4) {
+	    					temp3 = temp6 = temp7 = temp8 = temp9 = 0;
+	    				}
+
+	    				// 4 cạnh
+	    				// Cạnh trên
+	    				if ((j < w) && (j != 0) && (j != w-4)) {
+	    					temp1 = 0;
+	    					temp2 = 0;
+	    					temp3 = 0;
+	    				}
+
+	    				// Cạnh dưới
+	    				if ((j > w*h) && (j != w*h + w-4)) {
+	    					temp7 = 0;
+	    					temp8 = 0;
+	    					temp9 = 0;
+	    				}
+
+	    				// Cạnh trái
+	    				if ((j % w == 0) && (j != 0) && (j != w*h)) {
+	    					temp1 = 0;
+	    					temp4 = 0;
+	    					temp7 = 0;
+	    				}
+
+	    				// Cạnh phải
+	    				if ((j % (w-4) == 0) && (j != w-4) && (j != w*h + w-4)) {
+	    					temp3 = 0;
+	    					temp6 = 0;
+	    					temp9 = 0;
+	    				}*/
+
+				        pixelX = (
+				            (kernelX[0][0] * temp1) +
+				            (kernelX[0][1] * temp2) +
+				            (kernelX[0][2] * temp3) +
+				            (kernelX[1][0] * temp4) +
+				            (kernelX[1][1] * temp5) +
+				            (kernelX[1][2] * temp6) +
+				            (kernelX[2][0] * temp7) +
+				            (kernelX[2][1] * temp8) +
+				            (kernelX[2][2] * temp9)
+				        );
+
+				        pixelY = (
+				          (kernelY[0][0] * temp1) +
+				          (kernelY[0][1] * temp2) +
+				          (kernelY[0][2] * temp3) +
+				          (kernelY[1][0] * temp4) +
+				          (kernelY[1][1] * temp5) +
+				          (kernelY[1][2] * temp6) +
+				          (kernelY[2][0] * temp7) +
+				          (kernelY[2][1] * temp8) +
+				          (kernelY[2][2] * temp9)
+				        );
+
+						var magnitude = Math.sqrt((pixelX * pixelX) + (pixelY * pixelY));
+						//var magnitude = pixelX;
+						data[j] = magnitude;
+				        data[j+1] = magnitude;
+				        data[j+2] = magnitude;
+				        data[j+3] = 255;
+			    	}
+
+			    	var threshold = 255;
+			    	for (var k = 0; k < data.length; k+=4) {
+			    		if (data[k] >= threshold) {
+			    			data[k] = 255;
+			    			data[k+1] = 255;
+			    			data[k+2] = 255;
+			    		} else if (data[k] < threshold) {
+			    			data[k] = 0;
+			    			data[k+1] = 0;
+			    			data[k+2] = 0;
+			    		}
+			    	}
+			    			
+    			vdata.data = data;
+    			c.putImageData(vdata,660,215);
+    			setTimeout(function(){ 
+    				drawvideo(v,c,w,h);
+    			}, 0);
+			}
+
+			document.addEventListener("DOMContentLoaded", function(){
+				var v = document.getElementById("v");
+				var canvas = document.getElementById("c");
+				var ctx = canvas.getContext("2d");
+
+    			ctx.beginPath();
+				ctx.rect(0,0,600,700);
+				ctx.stroke();
+				ctx.beginPath();
+				ctx.rect(600,0,600,700);
+				ctx.stroke();
+
+				var cw = 480;
+			    var ch = 270;
+
+				v.addEventListener("play", function(){
+			        drawvideo(v,ctx,cw,ch);
+			    },false);
+			},false);
+		</script>
+	</body>
+</html>
